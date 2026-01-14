@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Temperature Guesser</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f2f2f2;
+      padding: 40px;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      margin-top: 10px;
+      width: 80%;
+      font-size: 16px;
+    }
+    button {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h1>🌍 Temperature Guesser</h1>
+    <h2 id="city">Lade Ort…</h2>
+    <p id="localTime">🕒 Uhrzeit: --:--</p>
+
+    <input type="number" id="guess" placeholder="Temperatur in °C">
+    <br>
+    <button onclick="checkGuess()">Raten</button>
+
+    <p id="result"></p>
+    <button onclick="location.reload()">Neuer Ort</button>
+  </div>
+
+  <script>
+    let realTemp = 0;
+
+    const cities = [
+      { name: "Berlin", lat: 52.52, lon: 13.41 },
+      { name: "Madrid", lat: 40.42, lon: -3.70 },
+      { name: "Oslo", lat: 59.91, lon: 10.75 },
+      { name: "Kairo", lat: 30.04, lon: 31.24 },
+      { name: "Tokio", lat: 35.68, lon: 139.69 },
+      { name: "New York", lat: 40.71, lon: -74.01 },
+      { name: "Sydney", lat: -33.87, lon: 151.21 },
+      { name: "Rio de Janeiro", lat: -22.91, lon: -43.17 },
+      { name: "Mumbai", lat: 19.08, lon: 72.88 },
+      { name: "Singapur", lat: 1.35, lon: 103.82 }
+    ];
+
+    const city = cities[Math.floor(Math.random() * cities.length)];
+    document.getElementById("city").innerText = city.name;
+
+    fetch(
+      `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${city.lat}` +
+      `&longitude=${city.lon}` +
+      `&current_weather=true` +
+      `&timezone=auto`
+    )
+      .then(res => res.json())
+      .then(data => {
+        realTemp = data.current_weather.temperature;
+
+        // ⚠️ DIESE ZEIT IST SCHON LOKAL
+        const timeString = data.current_weather.time;
+
+        // Nur anzeigen, nicht umrechnen
+        const [date, time] = timeString.split("T");
+        const [hour, minute] = time.split(":");
+
+        document.getElementById("localTime").innerText =
+          `🕒 Uhrzeit: ${hour}:${minute}`;
+      })
+      .catch(() => {
+        document.getElementById("localTime").innerText =
+          "🕒 Uhrzeit: Fehler";
+      });
+
+    function checkGuess() {
+      const guess = Number(document.getElementById("guess").value);
+      const diff = Math.abs(guess - realTemp);
+
+      document.getElementById("result").innerText =
+        `🌡️ Echte Temperatur: ${realTemp} °C
+❄️ Abweichung: ${diff.toFixed(1)} °C`;
+    }
+  </script>
+
+</body>
+</html>
